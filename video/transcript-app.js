@@ -76,9 +76,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (data.success) {
                 // Handle success
                 if (data.available_captions && data.available_captions.length > 0) {
-                    transcriptArea.value = `Video ID: ${data.video_id}\n\nAvailable Captions:\n${formatCaptions(data.available_captions)}\n\nTranscript Preview:\n${data.transcript_preview}\n\nTotal Lines: ${data.total_lines}\n\n${data.message}`;
-                    sendBtn.disabled = false;
-                    showSuccess(transcriptStatus, 'Transcript retrieved successfully');
+                    // Check if we have actual transcript content or just captions info
+                    if (data.transcript_preview && data.transcript_preview !== 'Transcript available but requires special handling') {
+                        // We have actual transcript content
+                        transcriptArea.value = `Video ID: ${data.video_id}\n\nVideo Title: ${data.video_title}\n\nAvailable Captions:\n${formatCaptions(data.available_captions)}\n\nTranscript Content:\n${data.transcript_preview}\n\nTotal Lines: ${data.total_lines || 'N/A'}\n\n${data.message}`;
+                        sendBtn.disabled = false;
+                        showSuccess(transcriptStatus, 'Transcript retrieved successfully!');
+                    } else {
+                        // Only captions info available
+                        transcriptArea.value = `Video ID: ${data.video_id}\n\nVideo Title: ${data.video_title}\n\nAvailable Captions:\n${formatCaptions(data.available_captions)}\n\nTranscript Preview:\n${data.transcript_preview}\n\nTotal Captions: ${data.total_captions}\n\n${data.message}`;
+                        sendBtn.disabled = true;
+                        showWarning(transcriptStatus, 'Only captions info available');
+                    }
                 } else {
                     transcriptArea.value = `No captions available for this video.\n\n${data.message}`;
                     sendBtn.disabled = true;
