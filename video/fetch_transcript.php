@@ -166,38 +166,79 @@ if (empty($availableCaptions)) {
     exit;
 }
 
-// Try to get transcript from the first available caption
+// Try to get transcript using YouTube's timed text API
 $selectedCaption = $availableCaptions[0];
-$captionId = $selectedCaption['id'];
+$language = $selectedCaption['language'] ?? 'en';
 
-// Download transcript using captions.download endpoint
-$transcriptUrl = "https://www.googleapis.com/youtube/v3/captions/" . urlencode($captionId);
-$transcriptData = makeYouTubeApiRequest($transcriptUrl, 'GET');
+// Use YouTube's timed text API to get actual transcript content
+$transcriptUrl = "https://www.youtube.com/api/timedtext?lang=" . urlencode($language) . "&v=" . urlencode($videoId);
 
-if (isset($transcriptData['error'])) {
-    // If direct download fails, try alternative method
-    echo json_encode([
-        'success' => true,
-        'video_title' => $videoTitle,
-        'video_id' => $videoId,
-        'available_captions' => $availableCaptions,
-        'transcript_preview' => 'Transcript available but requires special handling',
-        'total_captions' => count($availableCaptions),
-        'message' => 'Captions found successfully. Full transcript download requires additional API calls.',
-        'note' => 'OAuth2 authentication successful. Captions are available for this video.'
-    ]);
-    exit;
+// Make HTTP request to get transcript
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $transcriptUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+$transcriptXml = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200 && !empty($transcriptXml)) {
+    // Parse XML transcript
+    $xml = simplexml_load_string($transcriptXml);
+    if ($xml && isset($xml->text)) {
+        $transcriptLines = [];
+        $totalLines = 0;
+        
+        foreach ($xml->text as $text) {
+            $start = (float)$text['start'];
+            $duration = (float)$text['dur'];
+            $content = (string)$text;
+            
+            if (!empty(trim($content))) {
+                $transcriptLines[] = [
+                    'start' => $start,
+                    'duration' => $duration,
+                    'text' => trim($content)
+                ];
+                $totalLines++;
+            }
+        }
+        
+        // Format transcript for display
+        $formattedTranscript = '';
+        foreach ($transcriptLines as $line) {
+            $minutes = floor($line['start'] / 60);
+            $seconds = $line['start'] % 60;
+            $timeStamp = sprintf('[%02d:%02d]', $minutes, $seconds);
+            $formattedTranscript .= $timeStamp . ' ' . $line['text'] . "\n";
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'video_title' => $videoTitle,
+            'video_id' => $videoId,
+            'available_captions' => $availableCaptions,
+            'transcript_preview' => $formattedTranscript,
+            'total_lines' => $totalLines,
+            'message' => 'Transcript retrieved successfully!',
+            'note' => 'Full transcript content with timestamps is now available.'
+        ]);
+        exit;
+    }
 }
 
-// For now, return success with available captions
+// Fallback: return captions info if transcript download fails
 echo json_encode([
     'success' => true,
     'video_title' => $videoTitle,
     'video_id' => $videoId,
     'available_captions' => $availableCaptions,
-    'transcript_preview' => 'Transcript available via OAuth2',
+    'transcript_preview' => 'Transcript download failed, but captions are available',
     'total_captions' => count($availableCaptions),
-    'message' => 'OAuth2 authentication successful. Captions are available for this video.',
-    'note' => 'Full transcript content can be downloaded using the caption ID and additional API calls.'
+    'message' => 'Captions found successfully. Transcript download failed.',
+    'note' => 'Try using a different video or check if captions are available.'
 ]);
 ?>
