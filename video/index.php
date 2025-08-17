@@ -219,7 +219,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- <h2 style="text-align: center; margin-top:25px;">Add New User </h2> -->
 
       <!-- Include navigation -->
-      <?php include '../nav-admin.php'; ?>
+      <?php include __DIR__ . '/../nav-admin.php'; ?>
 
     
 
