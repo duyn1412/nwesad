@@ -42,26 +42,73 @@ if (!is_array($payload) || empty($payload['youtube_url'])) {
 
 /**
  * Extracts a YouTube video ID from a URL.
+ * Enhanced to handle more YouTube URL formats.
  */
 function getYouTubeVideoId(string $url): string
 {
+    // Clean the URL first
+    $url = trim($url);
+    
+    // Remove any query parameters that might interfere
+    $url = preg_replace('/[?&].*$/', '', $url);
+    
     $patterns = [
-        '/youtu\.be\/([a-zA-Z0-9_-]{11})/',                 // short form
-        '/youtube\.com\/(?:.*v=|.*\/v\/|embed\/)([a-zA-Z0-9_-]{11})/', // watch or embed form
+        // Short form: youtu.be/VIDEO_ID
+        '/youtu\.be\/([a-zA-Z0-9_-]{11})/',
+        
+        // Standard watch form: youtube.com/watch?v=VIDEO_ID
+        '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/',
+        
+        // Alternative watch form: youtube.com/watch?feature=...&v=VIDEO_ID
+        '/youtube\.com\/watch\?.*[&?]v=([a-zA-Z0-9_-]{11})/',
+        
+        // Embed form: youtube.com/embed/VIDEO_ID
+        '/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/',
+        
+        // Channel video form: youtube.com/channel/.../videos/VIDEO_ID
+        '/youtube\.com\/channel\/[^\/]+\/videos\/([a-zA-Z0-9_-]{11})/',
+        
+        // User video form: youtube.com/user/.../videos/VIDEO_ID
+        '/youtube\.com\/user\/[^\/]+\/videos\/([a-zA-Z0-9_-]{11})/',
+        
+        // Direct video form: youtube.com/v/VIDEO_ID
+        '/youtube\.com\/v\/([a-zA-Z0-9_-]{11})/',
+        
+        // Mobile form: m.youtube.com/watch?v=VIDEO_ID
+        '/m\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/',
+        
+        // Music form: music.youtube.com/watch?v=VIDEO_ID
+        '/music\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/',
+        
+        // Just the video ID itself (if user pastes only the ID)
+        '/^([a-zA-Z0-9_-]{11})$/'
     ];
+    
     foreach ($patterns as $pattern) {
         if (preg_match($pattern, $url, $matches)) {
             return $matches[1];
         }
     }
+    
     return '';
 }
 
 $videoUrl = trim($payload['youtube_url']);
 $videoId  = getYouTubeVideoId($videoUrl);
 
+// Debug logging
+error_log("YouTube URL received: " . $videoUrl);
+error_log("Extracted video ID: " . $videoId);
+
 if ($videoId === '') {
-    echo json_encode(['error' => 'Invalid YouTube URL']);
+    echo json_encode([
+        'error' => 'Invalid YouTube URL',
+        'debug' => [
+            'received_url' => $videoUrl,
+            'extracted_id' => $videoId,
+            'message' => 'Could not extract video ID from the provided URL'
+        ]
+    ]);
     exit;
 }
 
