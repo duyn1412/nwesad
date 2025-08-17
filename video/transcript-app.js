@@ -75,6 +75,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Total lines:', data.total_lines);
             console.log('Total captions:', data.total_captions);
             console.log('Available captions:', data.available_captions);
+            
+            // Log debug info if available
+            if (data.debug_info) {
+                console.log('=== DEBUG INFO ===');
+                console.log('Debug info:', data.debug_info);
+                if (data.debug_info.youtube_api_v3_response) {
+                    console.log('YouTube API v3 Response:', data.debug_info.youtube_api_v3_response);
+                }
+                console.log('==================');
+            }
             console.log('================================');
 
             if (data.error) {
