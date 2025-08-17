@@ -166,88 +166,87 @@ if (empty($availableCaptions)) {
     exit;
 }
 
-// Try to get transcript using YouTube's timed text API
+// Try to get transcript using YouTube Data API v3 captions.download
 $selectedCaption = $availableCaptions[0];
+$captionId = $selectedCaption['id'];
 $language = $selectedCaption['language'] ?? 'en';
 
-// Use YouTube's timed text API to get actual transcript content
-$transcriptUrl = "https://www.youtube.com/api/timedtext?lang=" . urlencode($language) . "&v=" . urlencode($videoId);
+// Use YouTube Data API v3 captions.download endpoint
+$transcriptUrl = "https://www.googleapis.com/youtube/v3/captions/" . urlencode($captionId);
 
 // Debug logging
-error_log("Attempting to fetch transcript from: " . $transcriptUrl);
-error_log("Language: " . $language . ", Video ID: " . $videoId);
+error_log("Attempting to fetch transcript from YouTube Data API v3: " . $transcriptUrl);
+error_log("Caption ID: " . $captionId . ", Language: " . $language . ", Video ID: " . $videoId);
 
-// Make HTTP request to get transcript
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $transcriptUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-
-$transcriptXml = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
+// Make authenticated request to YouTube Data API v3
+$transcriptData = makeYouTubeApiRequest($transcriptUrl, 'GET');
 
 // Debug logging
-error_log("Transcript API HTTP Code: " . $httpCode);
-error_log("Transcript API cURL Error: " . ($curlError ?: 'None'));
-error_log("Transcript API Response Length: " . strlen($transcriptXml));
-error_log("Transcript API Response Preview: " . substr($transcriptXml, 0, 200));
+error_log("Transcript API v3 Response: " . json_encode($transcriptData));
 
-if ($httpCode === 200 && !empty($transcriptXml)) {
-    // Debug logging
-    error_log("Transcript API call successful, attempting XML parsing");
+if (isset($transcriptData['error'])) {
+    // If captions.download fails, try alternative method using YouTube Transcript API
+    error_log("YouTube Data API v3 captions.download failed: " . json_encode($transcriptData['error']));
     
-    // Parse XML transcript
-    $xml = simplexml_load_string($transcriptXml);
-    if ($xml && isset($xml->text)) {
-        error_log("XML parsing successful, found " . count($xml->text) . " text elements");
-        $transcriptLines = [];
-        $totalLines = 0;
+    // Try YouTube Transcript API (third-party service)
+    $transcriptApiUrl = "https://youtube-transcript-api.vercel.app/api/transcript?videoID=" . urlencode($videoId) . "&lang=" . urlencode($language);
+    
+    error_log("Trying YouTube Transcript API: " . $transcriptApiUrl);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $transcriptApiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $transcriptResponse = curl_exec($ch);
+    $transcriptHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $transcriptCurlError = curl_error($ch);
+    curl_close($ch);
+    
+    error_log("YouTube Transcript API Response - HTTP: $transcriptHttpCode, cURL Error: " . ($transcriptCurlError ?: 'None'));
+    
+    if ($transcriptHttpCode === 200 && !empty($transcriptResponse)) {
+        $transcriptJson = json_decode($transcriptResponse, true);
         
-        foreach ($xml->text as $text) {
-            $start = (float)$text['start'];
-            $duration = (float)$text['dur'];
-            $content = (string)$text;
+        if ($transcriptJson && isset($transcriptJson['transcript'])) {
+            error_log("YouTube Transcript API successful, found transcript data");
             
-            if (!empty(trim($content))) {
-                $transcriptLines[] = [
-                    'start' => $start,
-                    'duration' => $duration,
-                    'text' => trim($content)
-                ];
-                $totalLines++;
+            $transcriptLines = $transcriptJson['transcript'];
+            $totalLines = count($transcriptLines);
+            
+            // Format transcript for display
+            $formattedTranscript = '';
+            foreach ($transcriptLines as $line) {
+                if (isset($line['start']) && isset($line['text'])) {
+                    $start = (float)$line['start'];
+                    $minutes = floor($start / 60);
+                    $seconds = $start % 60;
+                    $timeStamp = sprintf('[%02d:%02d]', $minutes, $seconds);
+                    $formattedTranscript .= $timeStamp . ' ' . $line['text'] . "\n";
+                }
             }
+            
+            echo json_encode([
+                'success' => true,
+                'video_title' => $videoTitle,
+                'video_id' => $videoId,
+                'available_captions' => $availableCaptions,
+                'transcript_preview' => $formattedTranscript,
+                'total_lines' => $totalLines,
+                'message' => 'Transcript retrieved successfully via YouTube Transcript API!',
+                'note' => 'Full transcript content with timestamps is now available.'
+            ]);
+            exit;
         }
-        
-        // Format transcript for display
-        $formattedTranscript = '';
-        foreach ($transcriptLines as $line) {
-            $minutes = floor($line['start'] / 60);
-            $seconds = $line['start'] % 60;
-            $timeStamp = sprintf('[%02d:%02d]', $minutes, $seconds);
-            $formattedTranscript .= $timeStamp . ' ' . $line['text'] . "\n";
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'video_title' => $videoTitle,
-            'video_id' => $videoId,
-            'available_captions' => $availableCaptions,
-            'transcript_preview' => $formattedTranscript,
-            'total_lines' => $totalLines,
-            'message' => 'Transcript retrieved successfully!',
-            'note' => 'Full transcript content with timestamps is now available.'
-        ]);
-        exit;
     }
+    
+    error_log("YouTube Transcript API also failed");
 }
 
 // Fallback: return captions info if transcript download fails
-error_log("Transcript download failed - HTTP: $httpCode, cURL Error: " . ($curlError ?: 'None') . ", Response Length: " . strlen($transcriptXml));
+error_log("All transcript download methods failed");
 
 echo json_encode([
     'success' => true,
@@ -259,10 +258,8 @@ echo json_encode([
     'message' => 'Captions found successfully. Transcript download failed.',
     'note' => 'Try using a different video or check if captions are available.',
     'debug_info' => [
-        'http_code' => $httpCode,
-        'curl_error' => $curlError ?: 'None',
-        'response_length' => strlen($transcriptXml),
-        'response_preview' => substr($transcriptXml, 0, 100)
+        'youtube_api_v3_response' => $transcriptData,
+        'note' => 'YouTube Data API v3 captions.download and YouTube Transcript API both failed'
     ]
 ]);
 ?>
