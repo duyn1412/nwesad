@@ -221,24 +221,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- Include navigation -->
       <?php include '../nav-admin.php'; ?>
 
-      <!-- Tab Navigation -->
-      <!-- <ul class="nav nav-tabs" id="videoTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="ai-assistant-tab" data-bs-toggle="tab" data-bs-target="#ai-assistant" type="button" role="tab" aria-controls="ai-assistant" aria-selected="true">
-            AI Assistant
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="batch-processing-tab" data-bs-toggle="tab" data-bs-target="#batch-processing" type="button" role="tab" aria-controls="batch-processing" aria-selected="false">
-            Batch Processing
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
-            Settings
-          </button>
-        </li>
-      </ul> -->
+    
 
       <!-- Tab Content -->
       <div class="tab-content" id="videoTabContent">

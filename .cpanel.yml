@@ -1,0 +1,42 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/nwengine/public_html/nwesadmin/
+    - /bin/cp -R * $DEPLOYPATH
+    - /bin/chmod 644 $DEPLOYPATH/*.php
+    - /bin/chmod 644 $DEPLOYPATH/*.html
+    - /bin/chmod 644 $DEPLOYPATH/*.css
+    - /bin/chmod 644 $DEPLOYPATH/*.js
+    - /bin/chmod 755 $DEPLOYPATH/*/
+    - /bin/chmod 755 $DEPLOYPATH/images/
+    - /bin/chmod 755 $DEPLOYPATH/video/
+    - /bin/chmod 755 $DEPLOYPATH/newsletter/
+    - /bin/chmod 755 $DEPLOYPATH/dashboard/
+    - /bin/chmod 755 $DEPLOYPATH/users/
+    - /bin/chmod 755 $DEPLOYPATH/blog/
+    - /bin/chmod 644 $DEPLOYPATH/.htaccess
+    - /bin/chmod 644 $DEPLOYPATH/styles.css
+    - /bin/chmod 644 $DEPLOYPATH/composer.json
+    - /bin/chmod 644 $DEPLOYPATH/composer.lock
+    - /bin/chmod 644 $DEPLOYPATH/connect-sql.php
+    - /bin/chmod 644 $DEPLOYPATH/get-settings.php
+    - /bin/chmod 644 $DEPLOYPATH/save-settings.php
+    - /bin/chmod 644 $DEPLOYPATH/index.php
+    - /bin/chmod 644 $DEPLOYPATH/login.php
+    - /bin/chmod 644 $DEPLOYPATH/nav-admin.php
+    - /bin/chmod 644 $DEPLOYPATH/newsletter-settings.php
+    - /bin/chmod 644 $DEPLOYPATH/video/oauth-config.php.template
+    - /bin/chmod 644 $DEPLOYPATH/video/oauth-callback.php
+    - /bin/chmod 644 $DEPLOYPATH/video/index.php
+    - /bin/chmod 644 $DEPLOYPATH/video/fetch_transcript.php
+    - /bin/chmod 644 $DEPLOYPATH/video/openai_assistant.php
+    - /bin/chmod 644 $DEPLOYPATH/video/transcript-app.js
+    - /bin/chmod 644 $DEPLOYPATH/newsletter/index.php
+    - /bin/chmod 644 $DEPLOYPATH/newsletter/youtube-integration.php
+    - /bin/chmod 644 $DEPLOYPATH/newsletter/youtube-helper.php
+    - /bin/chmod 644 $DEPLOYPATH/dashboard/index.php
+    - /bin/chmod 644 $DEPLOYPATH/users/index.php
+    - /bin/chmod 644 $DEPLOYPATH/users/user-admin.php
+    - /bin/chmod 644 $DEPLOYPATH/blog/index.php
+    - /bin/chmod 644 $DEPLOYPATH/logout/index.php
+    - echo "Deployment completed successfully!"
