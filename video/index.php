@@ -16,6 +16,7 @@ if (!isset($_COOKIE['username'])) {
 }
 
 
+
 ?>
 
 
@@ -218,10 +219,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- <h2 style="text-align: center; margin-top:25px;">Add New User </h2> -->
 
       <!-- Include navigation -->
-      <?php include 'nav-admin.php'; ?>
+      <?php include '../nav-admin.php'; ?>
 
       <!-- Tab Navigation -->
-      <ul class="nav nav-tabs" id="videoTabs" role="tablist">
+      <!-- <ul class="nav nav-tabs" id="videoTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="ai-assistant-tab" data-bs-toggle="tab" data-bs-target="#ai-assistant" type="button" role="tab" aria-controls="ai-assistant" aria-selected="true">
             AI Assistant
@@ -237,7 +238,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             Settings
           </button>
         </li>
-      </ul>
+      </ul> -->
 
       <!-- Tab Content -->
       <div class="tab-content" id="videoTabContent">
