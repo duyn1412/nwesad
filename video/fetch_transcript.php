@@ -14,8 +14,8 @@ header('Content-Type: application/json');
 session_start();
 
 // Include OAuth configuration
-if (file_exists(__DIR__ . '/../oauth-config.php')) {
-    require_once __DIR__ . '/../oauth-config.php';
+if (file_exists(__DIR__ . '/oauth-config.php')) {
+    require_once __DIR__ . '/oauth-config.php';
 } else {
     echo json_encode(['error' => 'OAuth configuration not found']);
     exit;
