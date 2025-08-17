@@ -112,39 +112,7 @@ if ($videoId === '') {
     exit;
 }
 
-/**
- * Make authenticated request to YouTube API using OAuth2 access token
- */
-function makeYouTubeApiRequest($url, $method = 'GET', $data = null) {
-    $accessToken = getYouTubeAccessToken();
-    
-    if (!$accessToken) {
-        return ['error' => 'No valid access token available'];
-    }
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $accessToken,
-        'Content-Type: application/json'
-    ]);
-    
-    if ($method === 'POST' && $data) {
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    }
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200) {
-        return json_decode($response, true);
-    } else {
-        return ['error' => 'HTTP Error: ' . $httpCode, 'response' => $response];
-    }
-}
+// Function makeYouTubeApiRequest is defined in oauth-config.php
 
 // First, get video details and available captions
 $videoInfoUrl = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=" . urlencode($videoId);
