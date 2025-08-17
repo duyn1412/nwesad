@@ -39,7 +39,7 @@ try {
     curl_close($ch);
 
     if ($httpCode !== 200) {
-        throw new Exception('Token exchange failed. HTTP Code: ' . $httpCode . ' Response: ' . $response);
+        throw new Exception('Token test exchange failed. HTTP Code: ' . $httpCode . ' Response: ' . $response);
     }
 
     $tokenData = json_decode($response, true);
