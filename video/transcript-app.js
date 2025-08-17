@@ -67,6 +67,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
+            
+            // Debug: Log the entire response
+            console.log('=== TRANSCRIPT API RESPONSE ===');
+            console.log('Full response data:', data);
+            console.log('Transcript preview:', data.transcript_preview);
+            console.log('Total lines:', data.total_lines);
+            console.log('Total captions:', data.total_captions);
+            console.log('Available captions:', data.available_captions);
+            console.log('================================');
 
             if (data.error) {
                 // Handle error
