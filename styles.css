@@ -1,0 +1,38 @@
+li.nav-item {
+    text-transform: capitalize;
+}
+nav.navbar.navbar-expand-lg.navbar-light.bg-light {
+    margin-bottom: 40px;
+}
+
+.d-new-template {
+    border: solid 1px #f23a2e;
+    padding: 10px;
+}
+
+.nav-pills .nav-link {
+    border: none !important;
+    margin-bottom: 13px !important;
+    
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link, .nav-pills .nav-link:hover {
+    color: #fff;
+    background-color: #f23a2e;
+}
+
+p.d-sub-mess {
+    color: #f23a2e;
+    font-size: 18px;
+}
+
+.top-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.user.row .col-md-6 button {
+    margin-left: 20px;
+}

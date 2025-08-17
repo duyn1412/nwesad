@@ -1,0 +1,5 @@
+{
+    "require": {
+        "hiddenhatpress/openai-assistants": "^1.0"
+    }
+}
