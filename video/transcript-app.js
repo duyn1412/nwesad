@@ -63,37 +63,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ youtubeUrl: youtubeUrl })
+                body: JSON.stringify({ youtube_url: youtubeUrl })
             });
 
             const data = await response.json();
 
-            if (data.success) {
-                // Display video info
-                displayVideoInfo(data);
-                
-                // Update transcript area
+            if (data.error) {
+                // Handle error
+                showError(transcriptStatus, data.error);
+                transcriptArea.value = '';
+                sendBtn.disabled = true;
+            } else {
+                // Handle success
                 if (data.available_captions && data.available_captions.length > 0) {
-                    transcriptArea.value = `Video: ${data.title}\n\nAvailable Captions:\n${formatCaptions(data.available_captions)}\n\n${data.message}`;
+                    transcriptArea.value = `Available Captions:\n${formatCaptions(data.available_captions)}\n\n${data.message}`;
                     sendBtn.disabled = false;
-                    showSuccess(transcriptStatus, data.message);
+                    showSuccess(transcriptStatus, 'Captions found successfully');
                 } else {
-                    transcriptArea.value = `Video: ${data.title}\n\nNo captions available for this video.\n\n${data.message}`;
+                    transcriptArea.value = `No captions available for this video.\n\n${data.message}`;
                     sendBtn.disabled = true;
                     showWarning(transcriptStatus, 'No captions available');
                 }
-            } else {
-                if (data.redirect_url) {
-                    // Authentication required
-                    showError(transcriptStatus, data.error);
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url;
-                    }, 2000);
-                } else {
-                    showError(transcriptStatus, data.error);
-                }
-                transcriptArea.value = '';
-                sendBtn.disabled = true;
             }
 
         } catch (error) {
