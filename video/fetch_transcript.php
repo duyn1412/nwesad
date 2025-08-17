@@ -173,6 +173,10 @@ $language = $selectedCaption['language'] ?? 'en';
 // Use YouTube's timed text API to get actual transcript content
 $transcriptUrl = "https://www.youtube.com/api/timedtext?lang=" . urlencode($language) . "&v=" . urlencode($videoId);
 
+// Debug logging
+error_log("Attempting to fetch transcript from: " . $transcriptUrl);
+error_log("Language: " . $language . ", Video ID: " . $videoId);
+
 // Make HTTP request to get transcript
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $transcriptUrl);
@@ -180,15 +184,27 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
 $transcriptXml = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
+// Debug logging
+error_log("Transcript API HTTP Code: " . $httpCode);
+error_log("Transcript API cURL Error: " . ($curlError ?: 'None'));
+error_log("Transcript API Response Length: " . strlen($transcriptXml));
+error_log("Transcript API Response Preview: " . substr($transcriptXml, 0, 200));
+
 if ($httpCode === 200 && !empty($transcriptXml)) {
+    // Debug logging
+    error_log("Transcript API call successful, attempting XML parsing");
+    
     // Parse XML transcript
     $xml = simplexml_load_string($transcriptXml);
     if ($xml && isset($xml->text)) {
+        error_log("XML parsing successful, found " . count($xml->text) . " text elements");
         $transcriptLines = [];
         $totalLines = 0;
         
@@ -231,6 +247,8 @@ if ($httpCode === 200 && !empty($transcriptXml)) {
 }
 
 // Fallback: return captions info if transcript download fails
+error_log("Transcript download failed - HTTP: $httpCode, cURL Error: " . ($curlError ?: 'None') . ", Response Length: " . strlen($transcriptXml));
+
 echo json_encode([
     'success' => true,
     'video_title' => $videoTitle,
@@ -239,6 +257,12 @@ echo json_encode([
     'transcript_preview' => 'Transcript download failed, but captions are available',
     'total_captions' => count($availableCaptions),
     'message' => 'Captions found successfully. Transcript download failed.',
-    'note' => 'Try using a different video or check if captions are available.'
+    'note' => 'Try using a different video or check if captions are available.',
+    'debug_info' => [
+        'http_code' => $httpCode,
+        'curl_error' => $curlError ?: 'None',
+        'response_length' => strlen($transcriptXml),
+        'response_preview' => substr($transcriptXml, 0, 100)
+    ]
 ]);
 ?>
