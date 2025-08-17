@@ -9,13 +9,6 @@
  * transcript with timestamps.  The response is returned as
  * JSON with either a `transcript` field on success or an
  * `error` field on failure.
- *
- * Note:  YouTube exposes transcripts through a timed text
- * interface.  Developer articles point out that you can either
- * use the official Data API to fetch captions or inspect the
- * network requests to the timed text endpoint when loading a
- * video【207579895664045†L228-L235】.  This script uses the timed text
- * endpoint because it does not require an API key.
  */
 
 header('Content-Type: application/json');
@@ -72,94 +65,78 @@ if ($videoId === '') {
  * @param string $url Fully qualified URL to request
  * @return string|null The response body or null on error
  */
-
 function http_get(string $url): ?string
 {
     // Use cURL if available
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         // Set a common User‑Agent header.  Some Google endpoints
         // require a browser‑like User‑Agent and may return 403/404
         // otherwise.  Accept a broad range of content types.
         $headers = [
-            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0',
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept: */*',
+            'Accept-Language: en-US,en;q=0.9',
+            'Accept-Encoding: gzip, deflate',
+            'Connection: keep-alive',
         ];
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $data = curl_exec($ch);
-        $statusOk = ($data !== false && $data !== '');
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        if ($statusOk) {
-            return $data;
-        }
-        // If the first attempt failed, try again with SSL verification disabled.
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        // disable SSL verification as fallback
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        $data = curl_exec($ch);
-        curl_close($ch);
-        if ($data !== false && $data !== '') {
+        
+        if ($data !== false && $data !== '' && $httpCode === 200) {
             return $data;
         }
     }
+    
     // Fall back to file_get_contents(); suppress warnings in case allow_url_fopen is disabled
-    $data = @file_get_contents($url);
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'header' => [
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept: */*',
+                'Accept-Language: en-US,en;q=0.9',
+            ],
+            'timeout' => 15,
+        ],
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+        ]
+    ]);
+    
+    $data = @file_get_contents($url, false, $context);
     if ($data !== false && $data !== '') {
         return $data;
     }
+    
     return null;
 }
 
-// Try to get captions using YouTube Data API v3 first
-$apiKey = 'AIzaSyBoJu9d4AldZMrgVxdUOY169Qd8IXp8Oqc'; // Your API key
-$captionsUrl = "https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=" . urlencode($videoId) . "&key=" . $apiKey;
-
-$listXmlString = null;
+// Try to get captions using YouTube's timed text API
 $listEndpoints = [
-    $captionsUrl, // Try YouTube Data API first
-    'https://video.google.com/timedtext?type=list&v=',
     'https://www.youtube.com/api/timedtext?type=list&v=',
+    'https://video.google.com/timedtext?type=list&v=',
 ];
 
+$listXmlString = null;
 foreach ($listEndpoints as $endpoint) {
-    if (strpos($endpoint, 'googleapis.com') !== false) {
-        // YouTube Data API
-        $response = http_get($endpoint);
-        if ($response && strpos($response, '"items"') !== false) {
-            $data = json_decode($response, true);
-            if (isset($data['items']) && count($data['items']) > 0) {
-                // Convert API response to XML-like format for compatibility
-                $listXmlString = '<?xml version="1.0" encoding="utf-8"?><transcript_list>';
-                foreach ($data['items'] as $item) {
-                    $listXmlString .= '<track lang_code="' . htmlspecialchars($item['snippet']['language'] ?? 'en') . '" name="' . htmlspecialchars($item['snippet']['name'] ?? '') . '" kind="' . ($item['snippet']['trackKind'] ?? '') . '"/>';
-                }
-                $listXmlString .= '</transcript_list>';
-                break;
-            }
-        }
-    } else {
-        // Legacy timed text API
-        $listXmlString = http_get($endpoint . urlencode($videoId));
-        if ($listXmlString !== null && trim($listXmlString) !== '') {
-            break;
-        }
+    $listXmlString = http_get($endpoint . urlencode($videoId));
+    if ($listXmlString !== null && trim($listXmlString) !== '') {
+        break;
     }
 }
 
 if ($listXmlString === null || trim($listXmlString) === '') {
-    echo json_encode(['error' => 'Failed to retrieve caption track list. YouTube may have changed their API.']);
+    echo json_encode(['error' => 'Failed to retrieve caption track list. This video may not have captions available.']);
     exit;
 }
 
@@ -210,7 +187,7 @@ if ($kind !== '') {
 
 $xmlString = http_get($timedTextUrl);
 if ($xmlString === null) {
-    echo json_encode(['error' => 'Failed to retrieve transcript from YouTube']);
+    echo json_encode(['error' => 'Failed to retrieve transcript from YouTube. This may require OAuth2 authentication.']);
     exit;
 }
 
@@ -224,13 +201,14 @@ $lines = [];
 foreach ($xml->text as $node) {
     $start   = (string)$node['start'];
     $content = trim(html_entity_decode((string)$node));
-    $lines[] = '[' . $start . '] ' . $content;
+    if (!empty($content)) {
+        $lines[] = '[' . $start . '] ' . $content;
+    }
 }
 
-// For now, return available caption information instead of actual transcript
-// since downloading requires OAuth2 authentication
+// Return available caption information and transcript preview
 $captionInfo = [];
-foreach ($xml->track as $track) {
+foreach ($listXml->track as $track) {
     $langCode = (string)$track['lang_code'];
     $name = (string)$track['name'];
     $kind = (string)$track['kind'];
@@ -239,13 +217,26 @@ foreach ($xml->track as $track) {
         'language' => $langCode,
         'name' => $name,
         'kind' => $kind,
-        'status' => 'available'
+        'isCC' => ($kind === ''),
+        'isAutoGenerated' => ($kind === 'asr'),
+        'isDraft' => false,
+        'trackKind' => $kind ?: 'manual'
     ];
 }
 
+// Return transcript preview (first 10 lines)
+$transcriptPreview = implode("\n", array_slice($lines, 0, 10));
+if (count($lines) > 10) {
+    $transcriptPreview .= "\n... and " . (count($lines) - 10) . " more lines";
+}
+
 echo json_encode([
-    'transcript' => null,
-    'message' => 'Transcript download requires OAuth2 authentication. Available captions listed below.',
+    'success' => true,
+    'video_id' => $videoId,
     'available_captions' => $captionInfo,
-    'note' => 'To download actual transcript content, OAuth2 authentication is required. This is a YouTube API limitation.'
+    'transcript_preview' => $transcriptPreview,
+    'total_lines' => count($lines),
+    'message' => 'Transcript retrieved successfully. Preview shown below.',
+    'note' => 'Full transcript available. To download complete transcript, OAuth2 authentication may be required for some videos.'
 ]);
+?>

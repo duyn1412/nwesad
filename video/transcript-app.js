@@ -73,17 +73,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 showError(transcriptStatus, data.error);
                 transcriptArea.value = '';
                 sendBtn.disabled = true;
-            } else {
+            } else if (data.success) {
                 // Handle success
                 if (data.available_captions && data.available_captions.length > 0) {
-                    transcriptArea.value = `Available Captions:\n${formatCaptions(data.available_captions)}\n\n${data.message}`;
+                    transcriptArea.value = `Video ID: ${data.video_id}\n\nAvailable Captions:\n${formatCaptions(data.available_captions)}\n\nTranscript Preview:\n${data.transcript_preview}\n\nTotal Lines: ${data.total_lines}\n\n${data.message}`;
                     sendBtn.disabled = false;
-                    showSuccess(transcriptStatus, 'Captions found successfully');
+                    showSuccess(transcriptStatus, 'Transcript retrieved successfully');
                 } else {
                     transcriptArea.value = `No captions available for this video.\n\n${data.message}`;
                     sendBtn.disabled = true;
                     showWarning(transcriptStatus, 'No captions available');
                 }
+            } else {
+                // Handle unexpected response
+                showError(transcriptStatus, 'Unexpected response format');
+                transcriptArea.value = '';
+                sendBtn.disabled = true;
             }
 
         } catch (error) {
