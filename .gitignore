@@ -31,6 +31,10 @@ composer.phar
 .env.local
 .env.production
 
+# OAuth configuration files with sensitive data
+video/oauth-config.php
+video/credentials.php
+
 # Cache
 cache/
 tmp/
