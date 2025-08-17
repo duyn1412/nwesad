@@ -1,7 +1,7 @@
 <?php
 // Database connection - credentials loaded from separate file
-if (file_exists(__DIR__ . '/video/credentials.php')) {
-    require_once __DIR__ . '/video/credentials.php';
+if (file_exists(__DIR__ . '/credentials.php')) {
+    require_once __DIR__ . '/credentials.php';
     
     // Use credentials from file if available
     if (defined('DB_HOST') && defined('DB_NAME') && defined('DB_USER') && defined('DB_PASS')) {

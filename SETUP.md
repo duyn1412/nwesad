@@ -10,7 +10,7 @@ cd nwesad
 
 ### 2. **Cấu hình Credentials (QUAN TRỌNG!)**
 
-#### Tạo file `video/credentials.php`:
+#### Tạo file `credentials.php` (ở thư mục gốc):
 ```php
 <?php
 // Google OAuth2 Credentials
@@ -30,10 +30,10 @@ define('YOUTUBE_API_KEY', 'your_youtube_api_key');
 ?>
 ```
 
-#### Tạo file `connect-sql.php`:
+#### Cập nhật `connect-sql.php` (đã được cấu hình sẵn):
 ```php
 <?php
-require_once 'video/credentials.php';
+require_once 'credentials.php';
 
 $conn = new mysqli(DB_HOST, DB_NAME, DB_USER, DB_PASS);
 if ($conn->connect_error) {
