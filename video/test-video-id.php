@@ -40,14 +40,14 @@ header('Content-Type: text/html; charset=utf-8');
         echo '<strong>URL length:</strong> ' . strlen($testUrl) . ' characters<br>';
         echo '<strong>Trimmed URL:</strong> ' . htmlspecialchars(trim($testUrl)) . '<br>';
         
-        // Test the exact function from fetch_transcript.php
+        // Test the exact function from fetch_transcript.php (UPDATED VERSION)
         function getYouTubeVideoId(string $url): string
         {
             // Clean the URL first
             $url = trim($url);
             
-            // Remove any query parameters that might interfere
-            $url = preg_replace('/[?&].*$/', '', $url);
+            // DON'T remove query parameters - we need them for YouTube URLs!
+            // $url = preg_replace('/[?&].*$/', '', $url); // REMOVED THIS LINE
             
             echo '<strong>After cleaning:</strong> ' . htmlspecialchars($url) . '<br>';
             
