@@ -49,8 +49,8 @@ function getYouTubeVideoId(string $url): string
     // Clean the URL first
     $url = trim($url);
     
-    // Remove any query parameters that might interfere
-    $url = preg_replace('/[?&].*$/', '', $url);
+    // DON'T remove query parameters - we need them for YouTube URLs!
+    // $url = preg_replace('/[?&].*$/', '', $url); // REMOVED THIS LINE
     
     $patterns = [
         // Short form: youtu.be/VIDEO_ID
