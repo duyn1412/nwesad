@@ -171,7 +171,9 @@ $selectedCaption = $availableCaptions[0];
 $language = $selectedCaption['language'] ?? 'en';
 
 // Use YouTube Transcript API (third-party service) as primary method
-$transcriptApiUrl = "https://youtube-transcript-api.vercel.app/api/transcript?videoID=" . urlencode($videoId) . "&lang=" . urlencode($language);
+// Format: https://youtube-transcript-api.vercel.app/api/transcript?url=YOUTUBE_URL
+$youtubeUrl = "https://www.youtube.com/watch?v=" . urlencode($videoId);
+$transcriptApiUrl = "https://youtube-transcript-api.vercel.app/api/transcript?url=" . urlencode($youtubeUrl);
 
 // Debug logging
 error_log("Attempting to fetch transcript from YouTube Transcript API: " . $transcriptApiUrl);
