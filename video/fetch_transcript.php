@@ -281,8 +281,50 @@ foreach ($alternativeEndpoints as $endpoint) {
     }
 }
 
+// If all methods fail, try AI transcription as final fallback
+error_log("All YouTube methods failed, trying AI transcription");
+
+// Try AI transcription using OpenAI Whisper
+$aiTranscriptUrl = "https://www.nwengineeringllc.com/nwesadmin/video/fetch_transcript_ai.php";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $aiTranscriptUrl);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['youtube_url' => $videoUrl]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 120); // Longer timeout for AI processing
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json'
+]);
+
+$aiResponse = curl_exec($ch);
+$aiHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$aiCurlError = curl_error($ch);
+curl_close($ch);
+
+if ($aiHttpCode === 200 && !empty($aiResponse)) {
+    $aiData = json_decode($aiResponse, true);
+    
+    if (json_last_error() === JSON_ERROR_NONE && isset($aiData['success']) && $aiData['success']) {
+        // AI transcription succeeded!
+        echo json_encode([
+            'success' => true,
+            'video_title' => $videoTitle,
+            'video_id' => $videoId,
+            'available_captions' => $availableCaptions,
+            'transcript_preview' => $aiData['transcript_preview'],
+            'total_lines' => $aiData['total_lines'],
+            'message' => 'Transcript retrieved successfully via AI transcription!',
+            'note' => 'Using OpenAI Whisper API for high-quality transcription.',
+            'method' => 'ai_transcription',
+            'language' => $aiData['language'] ?? 'unknown'
+        ]);
+        exit;
+    }
+}
+
 // If all methods fail, return captions info
-error_log("All transcript methods failed");
+error_log("All transcript methods including AI failed");
 
 echo json_encode([
     'success' => true,
@@ -291,12 +333,14 @@ echo json_encode([
     'available_captions' => $availableCaptions,
     'transcript_preview' => 'Transcript download failed, but captions are available',
     'total_captions' => count($availableCaptions),
-    'message' => 'Captions found successfully. Transcript download failed.',
-    'note' => 'Try using a different video or check if captions are available.',
+    'message' => 'Captions found successfully. All transcript methods failed.',
+    'note' => 'Try using a different video or consider AI transcription setup.',
     'debug_info' => [
         'youtube_transcript_api_http_code' => $transcriptApiHttpCode,
         'youtube_transcript_api_response' => substr($transcriptApiResponse, 0, 200),
-        'note' => 'All transcript methods failed'
+        'ai_transcription_http_code' => $aiHttpCode,
+        'ai_transcription_response' => substr($aiResponse, 0, 200),
+        'note' => 'All transcript methods including AI failed'
     ]
 ]);
 ?>
