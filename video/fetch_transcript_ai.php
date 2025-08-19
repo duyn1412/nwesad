@@ -65,12 +65,12 @@ $videoTitle = "YouTube Video - " . $videoId;
 $audioFile = null;
 $tempDir = sys_get_temp_dir();
 
-// Try using yt-dlp with full path
+// Try using yt-dlp with correct path order
 $ytdlpPaths = [
+    '/home/nwengine/.local/bin/yt-dlp',  // ✅ This is the correct path!
+    '/home/nwengine/bin/yt-dlp',
     '/usr/local/bin/yt-dlp',
     '/usr/bin/yt-dlp',
-    '/home/nwengine/.local/bin/yt-dlp',
-    '/home/nwengine/bin/yt-dlp',
     'yt-dlp' // fallback to PATH
 ];
 
