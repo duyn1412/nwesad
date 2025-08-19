@@ -125,6 +125,7 @@ if (!$openaiApiKey) {
 }
 
 if (!$openaiApiKey) {
+    header('Content-Type: application/json');
     echo json_encode([
         'error' => 'OpenAI API key not found',
         'note' => 'Please add OPENAI_API_KEY to your credentials.php file',
@@ -156,6 +157,7 @@ if ($aiHttpCode === 200 && !empty($aiResponse)) {
     
     if (json_last_error() === JSON_ERROR_NONE && isset($aiData['success']) && $aiData['success']) {
         // AI transcription succeeded!
+        header('Content-Type: application/json');
         echo json_encode([
             'success' => true,
             'video_title' => $videoTitle,
@@ -175,6 +177,7 @@ if ($aiHttpCode === 200 && !empty($aiResponse)) {
 // If AI transcription fails, return error
 error_log("AI transcription failed");
 
+header('Content-Type: application/json');
 echo json_encode([
     'success' => false,
     'error' => 'AI transcription failed',
