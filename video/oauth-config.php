@@ -6,12 +6,31 @@
  * IMPORTANT: Make sure credentials.php exists and contains the required constants
  */
 
-// Include credentials file
-if (!file_exists(__DIR__ . '/../credentials.php')) {
-    die('Error: credentials.php file not found. Please create this file with your OAuth credentials.');
+// Include credentials file - look in root directory
+$credentialsPath = __DIR__ . '/../credentials.php';
+if (!file_exists($credentialsPath)) {
+    // Try alternative paths
+    $alternativePaths = [
+        __DIR__ . '/credentials.php',  // Same directory
+        dirname(__DIR__) . '/credentials.php',  // Root directory
+        '/home/nwengine/public_html/nwesadmin/credentials.php'  // Absolute path
+    ];
+    
+    $found = false;
+    foreach ($alternativePaths as $path) {
+        if (file_exists($path)) {
+            $credentialsPath = $path;
+            $found = true;
+            break;
+        }
+    }
+    
+    if (!$found) {
+        die('Error: credentials.php file not found. Please create this file with your OAuth credentials.');
+    }
 }
 
-require_once __DIR__ . '/../credentials.php';
+require_once $credentialsPath;
 
 // Verify required credentials are defined
 if (!defined('YOUTUBE_CLIENT_ID') || !defined('YOUTUBE_CLIENT_SECRET') || !defined('YOUTUBE_REDIRECT_URI')) {
