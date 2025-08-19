@@ -40,7 +40,9 @@ if (!defined('YOUTUBE_CLIENT_ID') || !defined('YOUTUBE_CLIENT_SECRET') || !defin
 // YouTube API Scopes needed for transcript access
 define('YOUTUBE_SCOPES', [
     'https://www.googleapis.com/auth/youtube.force-ssl',
-    'https://www.googleapis.com/auth/youtube.readonly'
+    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/youtube',
+    'https://www.googleapis.com/auth/youtubepartner'
 ]);
 
 // OAuth2 Authorization URL
