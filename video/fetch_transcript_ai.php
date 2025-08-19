@@ -65,14 +65,46 @@ $videoTitle = "YouTube Video - " . $videoId;
 $audioFile = null;
 $tempDir = sys_get_temp_dir();
 
-// Try using yt-dlp (modern youtube-dl)
-$ytdlpCommand = "yt-dlp -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
-$output = shell_exec($ytdlpCommand . " 2>&1");
+// Try using yt-dlp with full path
+$ytdlpPaths = [
+    '/usr/local/bin/yt-dlp',
+    '/usr/bin/yt-dlp',
+    '/home/nwengine/.local/bin/yt-dlp',
+    '/home/nwengine/bin/yt-dlp',
+    'yt-dlp' // fallback to PATH
+];
 
-if (empty($output) || strpos($output, 'ERROR') !== false) {
+$output = '';
+$ytdlpFound = false;
+
+foreach ($ytdlpPaths as $ytdlpPath) {
+    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
+    $output = shell_exec($ytdlpCommand . " 2>&1");
+    
+    if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false) {
+        $ytdlpFound = true;
+        break;
+    }
+}
+
+if (!$ytdlpFound) {
     // Try youtube-dl as fallback
-    $ytdlCommand = "youtube-dl -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
-    $output = shell_exec($ytdlCommand . " 2>&1");
+    $ytdlPaths = [
+        '/usr/local/bin/youtube-dl',
+        '/usr/bin/youtube-dl',
+        '/home/nwengine/.local/bin/youtube-dl',
+        'youtube-dl'
+    ];
+    
+    foreach ($ytdlPaths as $ytdlPath) {
+        $ytdlCommand = $ytdlPath . " -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
+        $output = shell_exec($ytdlCommand . " 2>&1");
+        
+        if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false) {
+            $ytdlpFound = true;
+            break;
+        }
+    }
 }
 
 // Look for downloaded audio file
