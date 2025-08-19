@@ -166,123 +166,27 @@ if (empty($availableCaptions)) {
     exit;
 }
 
-// Use YouTube Transcript API as primary method (more reliable)
-error_log("Using YouTube Transcript API as primary method");
+// Use OpenAI Whisper API as primary method (AI transcription)
+error_log("Using OpenAI Whisper API as primary method");
 
-$youtubeTranscriptUrl = "https://youtube-transcript-api.vercel.app/api/transcript?url=" . urlencode($videoUrl);
-
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $youtubeTranscriptUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-
-$transcriptApiResponse = curl_exec($ch);
-$transcriptApiHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$transcriptApiCurlError = curl_error($ch);
-curl_close($ch);
-
-// Debug logging
-error_log("YouTube Transcript API Response Code: " . $transcriptApiHttpCode);
-error_log("YouTube Transcript API Response: " . substr($transcriptApiResponse, 0, 500));
-
-if ($transcriptApiHttpCode === 200 && !empty($transcriptApiResponse)) {
-    $transcriptApiData = json_decode($transcriptApiResponse, true);
-    
-    if (json_last_error() === JSON_ERROR_NONE && isset($transcriptApiData['transcript'])) {
-        // Success! Format the transcript
-        $transcriptLines = $transcriptApiData['transcript'];
-        $totalLines = count($transcriptLines);
-        
-        $formattedTranscript = '';
-        foreach ($transcriptLines as $line) {
-            $start = $line['start'] ?? 0;
-            $text = $line['text'] ?? '';
-            
-            if (!empty(trim($text))) {
-                $minutes = floor($start / 60);
-                $seconds = $start % 60;
-                $timeStamp = sprintf('[%02d:%02d]', $minutes, $seconds);
-                $formattedTranscript .= $timeStamp . ' ' . trim($text) . "\n";
-            }
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'video_title' => $videoTitle,
-            'video_id' => $videoId,
-            'available_captions' => $availableCaptions,
-            'transcript_preview' => $formattedTranscript,
-            'total_lines' => $totalLines,
-            'message' => 'Transcript retrieved successfully via YouTube Transcript API!',
-            'note' => 'Full transcript content with timestamps is now available.'
-        ]);
-        exit;
+// Check if OpenAI API key is available
+$openaiApiKey = getenv('OPENAI_API_KEY');
+if (!$openaiApiKey) {
+    // Try to read from credentials file
+    if (file_exists(__DIR__ . '/../credentials.php')) {
+        require_once __DIR__ . '/../credentials.php';
+        $openaiApiKey = defined('OPENAI_API_KEY') ? OPENAI_API_KEY : null;
     }
 }
 
-// If YouTube Transcript API fails, try alternative endpoints
-error_log("YouTube Transcript API failed, trying alternative endpoints");
-
-$alternativeEndpoints = [
-    "https://youtube-transcript-api.vercel.app/api/transcript?videoID=" . urlencode($videoId) . "&lang=en",
-    "https://youtube-transcript-api.vercel.app/api/transcript?videoID=" . urlencode($videoId),
-    "https://youtube-transcript-api.vercel.app/api/transcript?url=" . urlencode("https://www.youtube.com/watch?v=" . $videoId)
-];
-
-foreach ($alternativeEndpoints as $endpoint) {
-    error_log("Trying alternative endpoint: " . $endpoint);
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $endpoint);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-    
-    $altResponse = curl_exec($ch);
-    $altHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($altHttpCode === 200 && !empty($altResponse)) {
-        $altData = json_decode($altResponse, true);
-        
-        if (json_last_error() === JSON_ERROR_NONE && isset($altData['transcript'])) {
-            // Success! Format the transcript
-            $transcriptLines = $altData['transcript'];
-            $totalLines = count($transcriptLines);
-            
-            $formattedTranscript = '';
-            foreach ($transcriptLines as $line) {
-                $start = $line['start'] ?? 0;
-                $text = $line['text'] ?? '';
-                
-                if (!empty(trim($text))) {
-                    $minutes = floor($start / 60);
-                    $seconds = $start % 60;
-                    $timeStamp = sprintf('[%02d:%02d]', $minutes, $seconds);
-                    $formattedTranscript .= $timeStamp . ' ' . trim($text) . "\n";
-                }
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'video_title' => $videoTitle,
-                'video_id' => $videoId,
-                'available_captions' => $availableCaptions,
-                'transcript_preview' => $formattedTranscript,
-                'total_lines' => $totalLines,
-                'message' => 'Transcript retrieved successfully via alternative endpoint!',
-                'note' => 'Full transcript content with timestamps is now available.'
-            ]);
-            exit;
-        }
-    }
+if (!$openaiApiKey) {
+    echo json_encode([
+        'error' => 'OpenAI API key not found',
+        'note' => 'Please add OPENAI_API_KEY to your credentials.php file',
+        'setup_guide' => 'See AI_TRANSCRIPTION_SETUP.md for setup instructions'
+    ]);
+    exit;
 }
-
-// If all methods fail, try AI transcription as final fallback
-error_log("All YouTube methods failed, trying AI transcription");
 
 // Try AI transcription using OpenAI Whisper
 $aiTranscriptUrl = "https://www.nwengineeringllc.com/nwesadmin/video/fetch_transcript_ai.php";
@@ -323,24 +227,24 @@ if ($aiHttpCode === 200 && !empty($aiResponse)) {
     }
 }
 
-// If all methods fail, return captions info
-error_log("All transcript methods including AI failed");
+// If AI transcription fails, return error
+error_log("AI transcription failed");
 
 echo json_encode([
-    'success' => true,
+    'success' => false,
+    'error' => 'AI transcription failed',
     'video_title' => $videoTitle,
     'video_id' => $videoId,
     'available_captions' => $availableCaptions,
-    'transcript_preview' => 'Transcript download failed, but captions are available',
-    'total_captions' => count($availableCaptions),
-    'message' => 'Captions found successfully. All transcript methods failed.',
-    'note' => 'Try using a different video or consider AI transcription setup.',
+    'message' => 'Failed to retrieve transcript via AI transcription.',
+    'note' => 'Please check OpenAI API key and server configuration.',
     'debug_info' => [
-        'youtube_transcript_api_http_code' => $transcriptApiHttpCode,
-        'youtube_transcript_api_response' => substr($transcriptApiResponse, 0, 200),
         'ai_transcription_http_code' => $aiHttpCode,
         'ai_transcription_response' => substr($aiResponse, 0, 200),
-        'note' => 'All transcript methods including AI failed'
+        'note' => 'AI transcription failed - check setup'
     ]
 ]);
+
+
+?>
 ?>
