@@ -58,16 +58,8 @@ if ($videoId === '') {
     exit;
 }
 
-// Get video info using YouTube Data API v3
-$videoInfoUrl = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" . urlencode($videoId);
-$videoInfo = makeYouTubeApiRequest($videoInfoUrl);
-
-if (isset($videoInfo['error']) || empty($videoInfo['items'])) {
-    echo json_encode(['error' => 'Failed to get video info']);
-    exit;
-}
-
-$videoTitle = $videoInfo['items'][0]['snippet']['title'];
+// Skip video info check - use default title
+$videoTitle = "YouTube Video - " . $videoId;
 
 // Method 1: Try to download audio using youtube-dl (if available)
 $audioFile = null;
