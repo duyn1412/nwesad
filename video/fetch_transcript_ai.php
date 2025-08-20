@@ -61,7 +61,7 @@ if ($videoId === '') {
 // Skip video info check - use default title
 $videoTitle = "YouTube Video - " . $videoId;
 
-// Method 1: Try to download audio using youtube-dl (if available)
+// Method 1: Try to download audio using yt-dlp (if available)
 $audioFile = null;
 $tempDir = sys_get_temp_dir();
 
@@ -83,7 +83,8 @@ $output = '';
 $ytdlpFound = false;
 
 foreach ($ytdlpPaths as $ytdlpPath) {
-    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 --sleep-interval 3 --max-sleep-interval 10 -o " . escapeshellarg($tempDir . "/" . $videoId . ".%(ext)s") . " " . escapeshellarg($videoUrl);
+    // Use format ID 234 (mp4 audio only - high quality) that we know works
+    $ytdlpCommand = $ytdlpPath . " -f 234 -o " . escapeshellarg($tempDir . "/" . $videoId . ".%(ext)s") . " " . escapeshellarg($videoUrl);
     
     // DEBUG: Log which yt-dlp path is being tried
     error_log("DEBUG: Trying yt-dlp path: " . $ytdlpPath);
@@ -111,19 +112,17 @@ foreach ($ytdlpPaths as $ytdlpPath) {
 }
 
 if (!$ytdlpFound) {
-    // Try youtube-dl as fallback
-    $ytdlPaths = [
-        '/usr/local/bin/youtube-dl',
-        '/usr/bin/youtube-dl',
-        '/home/nwengine/.local/bin/youtube-dl',
-        'youtube-dl'
-    ];
-    
-    foreach ($ytdlPaths as $ytdlPath) {
-        $ytdlCommand = $ytdlPath . " -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
-        $output = shell_exec($ytdlCommand . " 2>&1");
+    // Try with format "bestaudio" as fallback
+    foreach ($ytdlpPaths as $ytdlpPath) {
+        $ytdlpCommand = $ytdlpPath . " -f bestaudio -o " . escapeshellarg($tempDir . "/" . $videoId . ".%(ext)s") . " " . escapeshellarg($videoUrl);
+        $output = shell_exec($ytdlpCommand . " 2>&1");
         
-        if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false) {
+        if (!empty($output) && 
+            strpos($output, 'command not found') === false && 
+            strpos($output, 'No such file or directory') === false &&
+            (strpos($output, 'Downloading') !== false || 
+             strpos($output, 'download') !== false || 
+             strpos($output, '100%') !== false)) {
             $ytdlpFound = true;
             break;
         }
