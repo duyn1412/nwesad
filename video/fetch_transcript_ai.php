@@ -75,16 +75,31 @@ $ytdlpPaths = [
     'yt-dlp' // fallback to PATH
 ];
 
+// DEBUG: Log which file is being used
+error_log("DEBUG: fetch_transcript_ai.php loaded from: " . __FILE__);
+error_log("DEBUG: Current yt-dlp paths: " . print_r($ytdlpPaths, true));
+
 $output = '';
 $ytdlpFound = false;
 
 foreach ($ytdlpPaths as $ytdlpPath) {
     $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 --sleep-interval 3 --max-sleep-interval 10 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
+    
+    // DEBUG: Log which yt-dlp path is being tried
+    error_log("DEBUG: Trying yt-dlp path: " . $ytdlpPath);
+    error_log("DEBUG: Command: " . $ytdlpCommand);
+    
     $output = shell_exec($ytdlpCommand . " 2>&1");
     
+    // DEBUG: Log output
+    error_log("DEBUG: yt-dlp output: " . $output);
+    
     if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false && strpos($output, 'No such file or directory') === false) {
+        error_log("DEBUG: yt-dlp found and working at: " . $ytdlpPath);
         $ytdlpFound = true;
         break;
+    } else {
+        error_log("DEBUG: yt-dlp failed at: " . $ytdlpPath . " - Output: " . $output);
     }
 }
 
