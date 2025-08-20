@@ -78,7 +78,7 @@ $output = '';
 $ytdlpFound = false;
 
 foreach ($ytdlpPaths as $ytdlpPath) {
-    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
+    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 --sleep-interval 3 --max-sleep-interval 10 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
     $output = shell_exec($ytdlpCommand . " 2>&1");
     
     if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false && strpos($output, 'No such file or directory') === false) {
