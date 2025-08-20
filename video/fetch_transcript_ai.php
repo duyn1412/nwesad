@@ -115,11 +115,13 @@ if (!empty($audioFiles)) {
 
 if (!$audioFile) {
     echo json_encode([
-        'error' => 'Failed to download audio',
+        'error' => 'Failed to download audio from YouTube',
+        'note' => 'YouTube download tools are currently blocked. Consider using external transcription services.',
         'debug' => [
             'ytdlp_output' => $output,
             'temp_dir' => $tempDir,
-            'video_id' => $videoId
+            'video_id' => $videoId,
+            'suggestion' => 'Try: AssemblyAI, Google Speech-to-Text, or manual transcription'
         ]
     ]);
     exit;
