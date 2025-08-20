@@ -83,7 +83,7 @@ $output = '';
 $ytdlpFound = false;
 
 foreach ($ytdlpPaths as $ytdlpPath) {
-    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 --sleep-interval 3 --max-sleep-interval 10 -o " . escapeshellarg($tempDir . "/%id%.%(ext)s") . " " . escapeshellarg($videoUrl);
+    $ytdlpCommand = $ytdlpPath . " -x --audio-format mp3 --audio-quality 0 --sleep-interval 3 --max-sleep-interval 10 -o " . escapeshellarg($tempDir . "/" . $videoId . ".%(ext)s") . " " . escapeshellarg($videoUrl);
     
     // DEBUG: Log which yt-dlp path is being tried
     error_log("DEBUG: Trying yt-dlp path: " . $ytdlpPath);
