@@ -94,7 +94,14 @@ foreach ($ytdlpPaths as $ytdlpPath) {
     // DEBUG: Log output
     error_log("DEBUG: yt-dlp output: " . $output);
     
-    if (!empty($output) && strpos($output, 'ERROR') === false && strpos($output, 'command not found') === false && strpos($output, 'No such file or directory') === false) {
+    // Check if download was successful (ignore ffmpeg warnings)
+    if (!empty($output) && 
+        strpos($output, 'command not found') === false && 
+        strpos($output, 'No such file or directory') === false &&
+        (strpos($output, 'Downloading') !== false || 
+         strpos($output, 'download') !== false || 
+         strpos($output, '100%') !== false ||
+         strpos($output, 'has already been downloaded') !== false)) {
         error_log("DEBUG: yt-dlp found and working at: " . $ytdlpPath);
         $ytdlpFound = true;
         break;
