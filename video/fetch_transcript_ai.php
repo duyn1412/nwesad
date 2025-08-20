@@ -67,7 +67,8 @@ $tempDir = sys_get_temp_dir();
 
 // Try using yt-dlp with correct path order
 $ytdlpPaths = [
-    '/home/nwengine/.local/bin/yt-dlp',  // ✅ This is the correct path!
+    '/home/nwengine/python_apps/transcript/venv/bin/yt-dlp',  // ✅ New Python 3.9 path!
+    '/home/nwengine/.local/bin/yt-dlp',
     '/home/nwengine/bin/yt-dlp',
     '/usr/local/bin/yt-dlp',
     '/usr/bin/yt-dlp',
