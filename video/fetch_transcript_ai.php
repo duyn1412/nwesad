@@ -63,7 +63,8 @@ $videoTitle = "YouTube Video - " . $videoId;
 
 // Method 1: Try to download audio using yt-dlp (if available)
 $audioFile = null;
-$tempDir = sys_get_temp_dir();
+// Use current directory instead of temp directory for better compatibility
+$tempDir = __DIR__; // Use current script directory
 
 // Try using yt-dlp with correct path order
 $ytdlpPaths = [
@@ -78,6 +79,7 @@ $ytdlpPaths = [
 // DEBUG: Log which file is being used
 error_log("DEBUG: fetch_transcript_ai.php loaded from: " . __FILE__);
 error_log("DEBUG: Current yt-dlp paths: " . print_r($ytdlpPaths, true));
+error_log("DEBUG: Using temp directory: " . $tempDir);
 
 $output = '';
 $ytdlpFound = false;
@@ -129,10 +131,22 @@ if (!$ytdlpFound) {
     }
 }
 
-// Look for downloaded audio file
+// Look for downloaded audio file in current directory
 $audioFiles = glob($tempDir . "/" . $videoId . ".*");
+error_log("DEBUG: Looking for audio files: " . print_r($audioFiles, true));
+
 if (!empty($audioFiles)) {
     $audioFile = $audioFiles[0];
+    error_log("DEBUG: Found audio file: " . $audioFile);
+} else {
+    // Also check for any mp4 files that might have been downloaded
+    $mp4Files = glob($tempDir . "/*.mp4");
+    error_log("DEBUG: Available mp4 files: " . print_r($mp4Files, true));
+    
+    if (!empty($mp4Files)) {
+        $audioFile = $mp4Files[0];
+        error_log("DEBUG: Using available mp4 file: " . $audioFile);
+    }
 }
 
 if (!$audioFile) {
