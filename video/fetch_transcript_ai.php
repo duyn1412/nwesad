@@ -6,6 +6,11 @@
 
 header('Content-Type: application/json');
 
+// Increase PHP timeout for long downloads
+set_time_limit(300); // 5 minutes
+ini_set('max_execution_time', 300);
+ini_set('memory_limit', '256M');
+
 // Start session to access OAuth tokens
 session_start();
 
@@ -138,6 +143,14 @@ error_log("DEBUG: Looking for audio files: " . print_r($audioFiles, true));
 if (!empty($audioFiles)) {
     $audioFile = $audioFiles[0];
     error_log("DEBUG: Found audio file: " . $audioFile);
+    
+    // Verify file exists and has content
+    if (file_exists($audioFile) && filesize($audioFile) > 0) {
+        error_log("DEBUG: File verified - exists and has content: " . $audioFile . " (size: " . filesize($audioFile) . " bytes)");
+    } else {
+        error_log("DEBUG: File verification failed - exists: " . (file_exists($audioFile) ? 'yes' : 'no') . ", size: " . (file_exists($audioFile) ? filesize($audioFile) : 'N/A'));
+        $audioFile = null;
+    }
 } else {
     // Also check for any mp4 files that might have been downloaded
     $mp4Files = glob($tempDir . "/*.mp4");
@@ -146,8 +159,20 @@ if (!empty($audioFiles)) {
     if (!empty($mp4Files)) {
         $audioFile = $mp4Files[0];
         error_log("DEBUG: Using available mp4 file: " . $audioFile);
+        
+        // Verify file exists and has content
+        if (file_exists($audioFile) && filesize($audioFile) > 0) {
+            error_log("DEBUG: MP4 file verified - exists and has content: " . $audioFile . " (size: " . filesize($audioFile) . " bytes)");
+        } else {
+            error_log("DEBUG: MP4 file verification failed - exists: " . (file_exists($audioFile) ? 'yes' : 'no') . ", size: " . (file_exists($audioFile) ? filesize($audioFile) : 'N/A'));
+            $audioFile = null;
+        }
     }
 }
+
+// Additional debug: List all files in directory
+$allFiles = glob($tempDir . "/*");
+error_log("DEBUG: All files in directory: " . print_r($allFiles, true));
 
 if (!$audioFile) {
     echo json_encode([
