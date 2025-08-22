@@ -10,11 +10,19 @@ header('Content-Type: application/json');
 $openaiApiKey = getenv('OPENAI_API_KEY');
 $videoAssistantId = getenv('VIDEO_ASSISTANT_ID');
 
+// Debug logging
+error_log("DEBUG: Environment variables - OPENAI_API_KEY: " . ($openaiApiKey ? 'SET' : 'NOT SET'));
+error_log("DEBUG: Environment variables - VIDEO_ASSISTANT_ID: " . ($videoAssistantId ? 'SET' : 'NOT SET'));
+
 // Fallback to credentials.php if environment variables not set
 if (!$openaiApiKey || !$videoAssistantId) {
+    error_log("DEBUG: Environment variables not set, trying credentials.php");
+    
     // Include credentials file - look in multiple locations like oauth-config.php
     $credentialsPath = __DIR__ . '/../credentials.php';
     if (!file_exists($credentialsPath)) {
+        error_log("DEBUG: credentials.php not found at: " . $credentialsPath);
+        
         // Try alternative paths
         $alternativePaths = [
             __DIR__ . '/credentials.php',  // Same directory
@@ -24,17 +32,22 @@ if (!$openaiApiKey || !$videoAssistantId) {
         
         $found = false;
         foreach ($alternativePaths as $path) {
+            error_log("DEBUG: Trying path: " . $path);
             if (file_exists($path)) {
                 $credentialsPath = $path;
                 $found = true;
+                error_log("DEBUG: Found credentials.php at: " . $path);
                 break;
             }
         }
         
         if (!$found) {
+            error_log("DEBUG: credentials.php not found in any location");
             echo json_encode(['error' => 'Credentials file not found. Please create this file with your OpenAI credentials.']);
             exit;
         }
+    } else {
+        error_log("DEBUG: credentials.php found at: " . $credentialsPath);
     }
     
     require_once $credentialsPath;
@@ -42,6 +55,9 @@ if (!$openaiApiKey || !$videoAssistantId) {
     // Get from constants if environment variables not available
     $openaiApiKey = $openaiApiKey ?: ($OPENAI_API_KEY ?? null);
     $videoAssistantId = $videoAssistantId ?: ($VIDEO_ASSISTANT_ID ?? null);
+    
+    error_log("DEBUG: After credentials.php - OPENAI_API_KEY: " . ($openaiApiKey ? 'SET' : 'NOT SET'));
+    error_log("DEBUG: After credentials.php - VIDEO_ASSISTANT_ID: " . ($videoAssistantId ? 'SET' : 'NOT SET'));
 }
 
 if (!$openaiApiKey || !$videoAssistantId) {
