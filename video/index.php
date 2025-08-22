@@ -231,9 +231,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h5 class="mb-0">YouTube Transcript Fetcher</h5>
+                    <h5 class="mb-0">Video Transcript Analyzer</h5>
                   </div>
                   <div class="card-body">
+                    <!-- YouTube URL input disabled - using manual transcript input only
                     <div class="mb-3">
                       <label for="youtubeUrl" class="form-label">YouTube Video URL</label>
                       <div class="input-group">
@@ -245,6 +246,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                       </div>
                       <small class="form-text text-muted">Supports YouTube watch URLs, short URLs (youtu.be), and embed URLs</small>
                     </div>
+                    -->
 
                     <div class="mb-3">
                       <label for="transcript" class="form-label">Transcript</label>
