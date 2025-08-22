@@ -30,6 +30,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Add event listener to transcript textarea to enable/disable Send button
+    if (transcriptArea) {
+        transcriptArea.addEventListener('input', function() {
+            const hasText = transcriptArea.value.trim().length > 0;
+            sendBtn.disabled = !hasText;
+            
+            if (hasText) {
+                transcriptStatus.textContent = 'Ready to send to Assistant';
+                transcriptStatus.className = 'text-success';
+            } else {
+                transcriptStatus.textContent = 'Enter transcript to enable Send button';
+                transcriptStatus.className = 'text-muted';
+            }
+        });
+    }
+
     /**
      * Handle transcript fetching from YouTube
      */

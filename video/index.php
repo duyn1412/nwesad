@@ -248,9 +248,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     <div class="mb-3">
                       <label for="transcript" class="form-label">Transcript</label>
-                      <textarea id="transcript" class="form-control" rows="8" placeholder="Transcript will appear here after fetching..." readonly></textarea>
+                      <textarea id="transcript" class="form-control" rows="8" placeholder="Enter your transcript here manually or paste from another source..."></textarea>
                       <div class="form-text">
-                        <span id="transcriptStatus" class="text-muted">Ready to fetch transcript</span>
+                        <span id="transcriptStatus" class="text-muted">Ready to enter transcript manually</span>
                       </div>
                     </div>
 
