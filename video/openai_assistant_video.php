@@ -6,11 +6,11 @@
 
 header('Content-Type: application/json');
 
-// Include credentials
-if (file_exists(__DIR__ . '/credentials.php')) {
-    require_once __DIR__ . '/credentials.php';
+// Include credentials from parent directory
+if (file_exists(__DIR__ . '/../credentials.php')) {
+    require_once __DIR__ . '/../credentials.php';
 } else {
-    echo json_encode(['error' => 'Credentials file not found']);
+    echo json_encode(['error' => 'Credentials file not found in parent directory']);
     exit;
 }
 
