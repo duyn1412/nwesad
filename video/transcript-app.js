@@ -151,14 +151,13 @@ document.addEventListener('DOMContentLoaded', function() {
         assistantStatus.className = 'text-info';
 
         try {
-            const response = await fetch('openai_assistant.php', {
+            const response = await fetch('openai_assistant_video.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 
-                    transcript: transcript,
-                    action: 'process_transcript'
+                    transcript: transcript
                 })
             });
 
