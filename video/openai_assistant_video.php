@@ -6,36 +6,43 @@
 
 header('Content-Type: application/json');
 
-// Include credentials file - look in multiple locations like oauth-config.php
-$credentialsPath = __DIR__ . '/../credentials.php';
-if (!file_exists($credentialsPath)) {
-    // Try alternative paths
-    $alternativePaths = [
-        __DIR__ . '/credentials.php',  // Same directory
-        dirname(__DIR__) . '/credentials.php',  // Root directory
-        '/home/nwengine/public_html/nwesadmin/credentials.php'  // Absolute path
-    ];
-    
-    $found = false;
-    foreach ($alternativePaths as $path) {
-        if (file_exists($path)) {
-            $credentialsPath = $path;
-            $found = true;
-            break;
+// Get OpenAI API key and Assistant ID - use same pattern as fetch_transcript.php
+$openaiApiKey = getenv('OPENAI_API_KEY');
+$videoAssistantId = getenv('VIDEO_ASSISTANT_ID');
+
+// Fallback to credentials.php if environment variables not set
+if (!$openaiApiKey || !$videoAssistantId) {
+    // Include credentials file - look in multiple locations like oauth-config.php
+    $credentialsPath = __DIR__ . '/../credentials.php';
+    if (!file_exists($credentialsPath)) {
+        // Try alternative paths
+        $alternativePaths = [
+            __DIR__ . '/credentials.php',  // Same directory
+            dirname(__DIR__) . '/credentials.php',  // Root directory
+            '/home/nwengine/public_html/nwesadmin/credentials.php'  // Absolute path
+        ];
+        
+        $found = false;
+        foreach ($alternativePaths as $path) {
+            if (file_exists($path)) {
+                $credentialsPath = $path;
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            echo json_encode(['error' => 'Credentials file not found. Please create this file with your OpenAI credentials.']);
+            exit;
         }
     }
     
-    if (!$found) {
-        echo json_encode(['error' => 'Credentials file not found. Please create this file with your OpenAI credentials.']);
-        exit;
-    }
+    require_once $credentialsPath;
+    
+    // Get from constants if environment variables not available
+    $openaiApiKey = $openaiApiKey ?: ($OPENAI_API_KEY ?? null);
+    $videoAssistantId = $videoAssistantId ?: ($VIDEO_ASSISTANT_ID ?? null);
 }
-
-require_once $credentialsPath;
-
-// Get OpenAI API key and Assistant ID
-$openaiApiKey = $OPENAI_API_KEY ?? null;
-$videoAssistantId = $VIDEO_ASSISTANT_ID ?? null;
 
 if (!$openaiApiKey || !$videoAssistantId) {
     echo json_encode([
