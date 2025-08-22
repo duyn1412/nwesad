@@ -52,9 +52,17 @@ if (!$openaiApiKey || !$videoAssistantId) {
     
     require_once $credentialsPath;
     
-    // Get from constants if environment variables not available
-    $openaiApiKey = $openaiApiKey ?: ($OPENAI_API_KEY ?? null);
-    $videoAssistantId = $videoAssistantId ?: ($VIDEO_ASSISTANT_ID ?? null);
+    // Get from constants if environment variables not available - use same pattern as fetch_transcript.php
+    if (!$openaiApiKey) {
+        $openaiApiKey = defined('OPENAI_API_KEY') ? OPENAI_API_KEY : null;
+    }
+    if (!$videoAssistantId) {
+        $videoAssistantId = defined('VIDEO_ASSISTANT_ID') ? VIDEO_ASSISTANT_ID : null;
+    }
+    
+    // Debug constants values
+    error_log("DEBUG: Constant OPENAI_API_KEY value: " . (defined('OPENAI_API_KEY') ? OPENAI_API_KEY : 'NOT DEFINED'));
+    error_log("DEBUG: Constant VIDEO_ASSISTANT_ID value: " . (defined('VIDEO_ASSISTANT_ID') ? VIDEO_ASSISTANT_ID : 'NOT DEFINED'));
     
     error_log("DEBUG: After credentials.php - OPENAI_API_KEY: " . ($openaiApiKey ? 'SET' : 'NOT SET'));
     error_log("DEBUG: After credentials.php - VIDEO_ASSISTANT_ID: " . ($videoAssistantId ? 'SET' : 'NOT SET'));
